@@ -13,6 +13,6 @@ export class JwtAuthGuard extends AuthGuard('jwt') { //jwt -> token based authen
         } else if (err || !user) {
             throw new UnauthorizedException('Unauthorized access');
         }
-        return user; 
+        return user;
     }
 }

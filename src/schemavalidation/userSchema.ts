@@ -10,13 +10,9 @@ export const userSchema = Joi.object({
     }),
 
   password: Joi.string()
-    .min(6)
-    .max(10)
     .pattern(/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,10}$/)
     .messages({
       'string.base': 'Password must be a string',
-      'string.min': 'Password must be at least 6 characters long',
-      'string.max': 'Password must not exceed 10 characters',
       'string.pattern.base': 'Password must include at least one uppercase letter, one lowercase letter, one number, and one special character',
       'any.required': 'Password is required',
     }),

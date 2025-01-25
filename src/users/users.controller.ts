@@ -1,7 +1,6 @@
 import { Body, Controller, Get, Post, UseGuards, Request, HttpException, HttpStatus } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
-import * as bcrypt from 'bcrypt'
 import { JwtService } from '@nestjs/jwt';
 
 @Controller('users')
@@ -19,9 +18,11 @@ export class UsersController {
       }
       return { tokens: tokens }
     } catch (error) {
-      throw new HttpException({
-        Error: error.message,
-      }, HttpStatus.INTERNAL_SERVER_ERROR)
+      throw new HttpException(
+        {
+          Error: error.message
+        }, HttpStatus.INTERNAL_SERVER_ERROR
+      )
     }
   }
 
@@ -31,11 +32,10 @@ export class UsersController {
       const payload = await this.jwtService.verify(refreshToken, {
         secret: 'kjdn55nnd'
       })
- 
+
       const { username, hashedpassword, role } = payload
       const newAccessToken = await this.usersService.generateAccessToken({
         username,  //username : username
-        hashedpassword, //hashedpassword : hashedpassword
         role
       })
 
@@ -44,7 +44,6 @@ export class UsersController {
       return { message: 'Invalid or expired refresh token' };
     }
   }
-
 
   @Get('validate')
   @UseGuards(JwtAuthGuard)
