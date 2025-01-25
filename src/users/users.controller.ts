@@ -11,9 +11,9 @@ export class UsersController {
   ) { }
 
   @Post('login')
-  async login(@Body('username') username: string, @Body('password') password: string) {
+  async login(@Body('username') username: string, @Body('password') password: string, @Body('email') email: string, @Body('role') role: string) {
     try {
-      const tokens = await this.usersService.userLogin(username, password)
+      const tokens = await this.usersService.userLogin(username, password, email, role)
       if (!tokens) {
         return { message: "Invalid Credentials" }
       }
@@ -31,11 +31,12 @@ export class UsersController {
       const payload = await this.jwtService.verify(refreshToken, {
         secret: 'kjdn55nnd'
       })
-
-      const { username, hashedpassword } = payload
+ 
+      const { username, hashedpassword, role } = payload
       const newAccessToken = await this.usersService.generateAccessToken({
         username,  //username : username
         hashedpassword, //hashedpassword : hashedpassword
+        role
       })
 
       return { accessToken: newAccessToken }
@@ -48,6 +49,6 @@ export class UsersController {
   @Get('validate')
   @UseGuards(JwtAuthGuard)
   validate(@Request() req) {
-    return `Hai "${req.user.username}" you are eligible to create a challenge, why are you waiting`
+    return `Hai "${req.user.username}" you are eligible to create a challenge, why are you waiting "${req.user.role}"`
   }
 }

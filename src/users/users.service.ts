@@ -1,52 +1,136 @@
-import { HttpException, HttpStatus, Injectable, ParseUUIDPipe } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt'
+import { UserDto } from 'src/dto/Userdto';
+import { MasterService } from 'src/master/master.service';
+import { v4 as uuidv4 } from 'uuid'
 
 @Injectable()
 export class UsersService {
-    constructor(private jwtService: JwtService) { }
+  constructor(
+    private jwtService: JwtService) { }
 
-     private users = [
+  private users = [
+    {
+      id: uuidv4(),
+      username: "Aswin",
+      email: "aswin@gmail.com",
+      password: "password",
+      role: "admin"
+    },
+    {
+      id: uuidv4(),
+      username: "Jhon",
+      email: "jhon@gmail.com",
+      password: "password",
+      role: "user"
+    },
+    {
+      id: uuidv4(),
+      username: "Jhon Doe",
+      email: "doe@gmail.com",
+      password: "password",
+      role: "user"
+    },
+  ]
+
+  // CRUD operation..  
+  findAll() {
+    return this.users;
+  }
+
+  findOneById(id: string) {
+    try {
+      const user = this.users.find((user) => user.id === id);
+      if (!user) {
+        throw new NotFoundException(`User with ID ${id} not found`);
+      }
+      return user;
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.NOT_FOUND);
+    }
+  }
+
+  createUser(createUser: any) {
+    try {
+      const newUser = { id: uuidv4(), ...createUser };
+      this.users.push(newUser);
+      return {message : "User created Successfully"}
+    } catch (error) {
+      throw new HttpException(
+        'Failed to create user',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  updateUser(id: string, updateUser: any) {
+    try {
+      let userFound = false;
+      this.users = this.users.map((user) => {
+        if (user.id === id) {
+          userFound = true;
+          return { ...user, ...updateUser };
+        }
+        return user;
+      });
+      if (!userFound) {
+        throw new NotFoundException(`User with ID ${id} not found`);
+      }
+      return { message: `User with ID ${id} updated successfully` };
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.NOT_FOUND);
+    }
+  }
+
+  deleteUser(id: string) {
+    try {
+      const userIndex = this.users.findIndex((user) => user.id === id);
+      if (userIndex === -1) {
+        throw new NotFoundException(`User with ID ${id} not found`);
+      }
+      this.users.splice(userIndex, 1);
+      return { message: `User with ID ${id} deleted successfully` };
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.NOT_FOUND);
+    }
+  }
+
+  // Login to generate a token
+  async userLogin(username: string, password: string, email: string, role: string) {
+    try {
+      const user = this.users.find(user => user.username == username && user.password == password && user.role == role && user.email == email)
+      if (!user) return null
+      const hashedpassword = await bcrypt.hash(user.password, 10)
+      const accessToken = await this.generateAccessToken({ username: user.username, hashedpassword: hashedpassword, role: user.role })
+      const refreshToken = await this.generateRefreshToken({ username: user.username, hashedpassword, role: user.role })
+
+      return { accessToken: accessToken, refreshToken: refreshToken }
+
+    } catch (error) {
+      throw new HttpException(
         {
-            username: "Aswin",
-            password:  "password"
-        }
-    ]
-
-
-    async userLogin(username: string, password: string) {
-        try {
-            const user = this.users.find(user => user.username == username && user.password == password)
-            if (!user) return null
-            const hashedpassword = await bcrypt.hash(user.password, 10)
-            const accessToken = await this.generateAccessToken({username:user.username, hashedpassword:hashedpassword})
-            const refreshToken = await this.generateRefreshToken({username:user.username, hashedpassword})
-
-            return { accessToken:accessToken, refreshToken:refreshToken }
-
-        } catch (error) {
-            throw new HttpException(
-                {
-                    Error: error.message
-                }, HttpStatus.INTERNAL_SERVER_ERROR
-            )
-        }
+          Error: error.message
+        }, HttpStatus.INTERNAL_SERVER_ERROR
+      )
     }
+  }
 
-    //for generate the access token
-    async generateAccessToken(payload: { username: string , hashedpassword: string }) {
-        return this.jwtService.sign({username: payload.username, password: payload.hashedpassword}, {
-            secret: 'b1c34522dd',
-            expiresIn: '2m'
-        })
-    }
+  //for generate the access token
+  async generateAccessToken(payload: { username: string, hashedpassword: string, role: string }) {
+    return this.jwtService.sign({ username: payload.username, password: payload.hashedpassword, role: payload.role })
+    //    {
+    //   secret: 'b1c34522dd',
+    //   expiresIn: '20m'
+    // })
+  }
 
-    //for generate the refresh token
-    async generateRefreshToken(payload: { username: string , hashedpassword: string }) {
-        return this.jwtService.sign({username: payload.username,password: payload.hashedpassword}, {
-            secret: 'kjdn55nnd',
-            expiresIn: '20m'
-        })
-    }
+  //for generate the refresh token
+  async generateRefreshToken(payload: { username: string, hashedpassword: string, role: string }) {
+    return this.jwtService.sign({ username: payload.username, password: payload.hashedpassword, role: payload.role }, {
+      secret: 'kjdn55nnd',
+      expiresIn: '20m'
+    })
+  }
 
 }

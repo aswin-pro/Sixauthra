@@ -1,4 +1,4 @@
-import Joi, { date } from "joi";
+import * as Joi from "joi";
 
 export const challengeSchema = Joi.object({
     thumbnail: Joi.string().required().messages({
