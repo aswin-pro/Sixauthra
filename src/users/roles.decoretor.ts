@@ -5,3 +5,6 @@ import { SetMetadata } from '@nestjs/common';  //SetMetadata is a nestjs functio
 export const Roles = (...roles: string[]) => SetMetadata('roles', roles);   //...rest restparameter for example admin, users we can pass n number of values 
 //'roles' -> is a key  roles -> value eg: [admin,user]
 // Example: @SetMetadata('roles', ['admin'])
+
+
+
